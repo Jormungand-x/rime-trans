@@ -1,0 +1,37 @@
+# 方案的补丁文件
+#
+#
+patch:
+  # 添加云翻译功能：在输入文字后，再次输入两次单引号键即可触发此功能
+  switches/+:
+    # 在下面的 target_lang0 和 target_lang1 处填写对应要翻译的目标语言，在这里就可以通过切换来选择翻译的语言
+    - name: cloud_translation_japanese  # 中译日开关
+      states: [ 英译, 日译 ]  # 状态显示  
+      reset: 0  # 默认为0: 中译英，1: 中译日
+  engine/filters/@before 0: lua_filter@*cloud_translation        # 添加过滤器：候选词翻译
+  cloud_translation:
+    default_api: "niutrans"  # 默认使用小牛云翻译  谷歌：google，小牛云翻译：niutrans，DeepL翻译：deepl，微软翻译：microsoft，有道翻译：youdao，百度翻译：baidu
+    # 自定义触发键（默认为两个单引号）
+    trigger_key: "''"  # 可以设置为 ";;", "..", 等任意字符串，换成其他符号请确保它能上屏，就是把这个字符加入到speller/alphabet中
+    # 更改翻译的目标语言，可以选择两种 0 和 1 ，0为默认翻译的目标语言，1为可切换的目标语言。可在方案选择的界面去切换目标语言
+    target_lang0: "en"        # 英：en，中：zh，日：ja，韩：ko，俄：ru，法：fr，德：de
+    target_lang1: "ja"        # 西：es，葡：pt，阿：ar，泰：th，越：vi，印：id，马：ms，意：it
+    # 翻译API设置，选择自己的翻译API，其他的删不删除都不影响
+    api_keys:
+      # 小牛翻译API配置
+      niutrans: 
+        api_key: "小牛翻译API密钥"
+      # DeepL API密钥
+      deepl: "DeepL API密钥"
+      # Microsoft翻译API密钥
+      microsoft:
+        key: "Microsoft翻译API密钥"
+        region: "Microsoft API区域"
+      # 有道翻译API配置
+      youdao: 
+        app_id: "有道翻译应用ID"
+        app_key: "有道翻译应用密钥"
+      # 百度翻译API配置
+      baidu:
+        app_id: "百度翻译应用ID"
+        app_key: "百度翻译应用密钥"
