@@ -147,6 +147,13 @@ local MICROSOFT_LANG_MAP = {
     jp = "ja"
 }
 
+-- 百度翻译语言映射表
+local BAIDU_LANG_MAP = {
+    en = "en", zh = "zh", ja = "jp", ko = "kor", ru = "ru", 
+    fr = "fra", es = "spa", pt = "pt", ar = "ara", th = "th", 
+    vi = "vie", id = "id", de = "de", it = "it", cht = "cht"
+}
+
 -- URL编码函数：将字符串转换为URL安全格式
 local function url_encode(str)
     if not str then return "" end
@@ -544,13 +551,11 @@ local function baidu_translate(text, config)
         return nil, "百度API密钥未配置"
     end
     
-    -- 语言支持检查
-    if not SUPPORTED_LANGUAGES[target_lang] then
+    -- 使用百度特定的语言代码（新增映射）
+    local baidu_lang = BAIDU_LANG_MAP[target_lang]
+    if not baidu_lang then
         return nil, "百度不支持的目标语言: " .. target_lang
     end
-    
-    -- 特殊语言代码处理（jp映射到ja）
-    if target_lang == "jp" then target_lang = "ja" end
     
     -- 生成签名
     local salt = tostring(math.random(32768, 65536))  -- 随机盐值
@@ -561,7 +566,7 @@ local function baidu_translate(text, config)
     local url = "https://fanyi-api.baidu.com/api/trans/vip/translate"
     local body = "q=" .. url_encode(text) ..
                  "&from=auto" ..  -- 自动检测源语言
-                 "&to=" .. target_lang ..  -- 目标语言
+                 "&to=" .. baidu_lang ..  -- 使用百度特定的语言代码（修改）
                  "&appid=" .. app_id ..  -- 应用ID
                  "&salt=" .. salt ..  -- 随机盐值
                  "&sign=" .. sign  -- 签名
@@ -595,17 +600,6 @@ local function baidu_translate(text, config)
     end
     
     return nil, "百度未找到翻译结果"
-end
-
--- ============================================================
--- 辅助函数
--- ============================================================
-
--- 检查字符是否为中文字符
-local function is_chinese_character(char)
-    local code = utf8.codepoint(char)
-    -- 检查Unicode编码是否在汉字范围内
-    return code >= 0x4E00 and code <= 0x9FFF
 end
 
 -- ============================================================
@@ -650,16 +644,6 @@ local function filter(input, env)
             return
         end
         
-        -- 检查第一个字符是否是中文
-        local first_char = utf8.char(utf8.codepoint(cand_text, 1))
-        if not is_chinese_character(first_char) then
-            yield(Candidate("error", 0, #input_text, "[非中文候选词]", "请检查输入"))
-            -- 输出其他候选词
-            for i = 1, #candidates do
-                yield(candidates[i])
-            end
-            return
-        end
         
         -- 调用翻译API（根据配置选择不同的翻译服务）
         local translated_text, error_msg
